@@ -11,22 +11,42 @@ ManualControl::ManualControl(int _id, string _device, int _velocity):
 {
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
-    axis = Mat_<float>(4, 1);
+    axis = Mat<int>(2, 0);
     initKinematicModel();
 }
 
 void ManualControl::run()
 {
+    bool button_send = false;
+    bool axis_send = false;
     joystick = new Joystick(device);
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
 
     while(1){
-
         if(joystick->sample(&event)){
+            if(event.isButton()){
+                button_send = readEventButton(event);
+            }
 
+            if(event.isAxis()){
+                readEventAxis(event);
+            }
         }
+
+        if(axis_send = verifyAxis()) calculateVelocity();
+        else {
+            velocity[0][0] = 0.0;
+            velocity[1][0] = 0.0;
+        }
+
+        if(axis_send || button_send){
+            calculateWheelsVelocity();
+            //manda o dado
+        }
+
+        sleep(20);
     }
 }
 
@@ -35,8 +55,55 @@ void ManualControl::setMaxVelocity(int _velocity)
     max_velocity = _velocity;
 }
 
+//Métodos do controle
+bool ManualControl::readEventButton(JoystickEvent _event)
+{
+    switch(_event.number){
+    case 0:
+        //low kick
+    break;
+    case 1:
+        //high kick
+    break;
+    case 2:
+        //low kick
+    break;
+    case 3:
+        //low kick
+    break;
+    case 4:
+        //drible h
+    break;
+    case 5:
+        //drible a-h
+    break;
+    case 6:
+        //gira h
+    break;
+    case 7:
+        //gira a-h
+    break;
+    default:
+        return false;
+    }
 
-void ManualControl::initKinematicModel(){
+    return true;
+}
+void ManualControl::readEventAxis(JoystickEvent _event)
+{
+    if(_event.number<2)
+        axis[_event.number][0] = _event.value;
+}
+void ManualControl::verifyAxis()
+{
+    for(int i = 0 ; i<2 ; i++)
+        if(axis[i][0]>=MIN_AXIS_VALUE || axis[i][0]<=-(MIN_AXIS_VALUE)) return true;
+    return false;
+}
+
+//Métodos cinemáticos
+void ManualControl::initKinematicModel()
+{
     //! Estas medidas estão em metros.
 
     /// O raio da roda é utilizado para determinar as velocidades das rodas e o raio do robo
@@ -61,4 +128,15 @@ void ManualControl::initKinematicModel(){
     M[3][0] =  cos(alpha1);     M[3][1] = sin(alpha1);     M[3][2] = -radius_robot;
 
     M = (1.0/radius_wheels) * M;
+}
+void ManualControl::calculateVelocity()
+{
+    axis[1][0] = -axis[1][0];
+
+    for(int i = 0 ; i<2 ; i++)
+        velocity[i][0] = ((float)axis[i][0]/MAX_AXIS_VALUE)*max_velocity;
+}
+void ManualControl::calculateWheelsVelocity()
+{
+    velocity_wheels = M*velocity;
 }
