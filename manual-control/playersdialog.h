@@ -15,8 +15,16 @@ public:
     explicit PlayersDialog(QWidget *parent = 0);
     ~PlayersDialog();
 
+    int getPlayers();
+
+private slots:
+    void on_ok_cancel_button_accepted();
+
+    void on_playerBox_editingFinished();
+
 private:
     Ui::PlayersDialog *ui;
+    int n_players;
 };
 
 #endif // PLAYERSDIALOG_H

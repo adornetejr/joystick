@@ -12,11 +12,13 @@ class ManualWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ManualWindow(QWidget *parent = 0);
+    explicit ManualWindow(int _player, QWidget *parent = 0);
     ~ManualWindow();
 
 private:
     Ui::ManualWindow *ui;
+
+    int player_num;
 };
 
 #endif // MANUALWINDOW_H
