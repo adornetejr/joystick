@@ -6,20 +6,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    QPixmap pix("../joystick/images/logo.png");
+    ui->fbot_image->setPixmap(pix);
+    players_ui = new PlayersDialog();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
-
-
-
 //QT slots
 void MainWindow::on_ok_button_clicked()
 {
-    index = ui->mode_box->currentIndex();
+    int index = ui->mode_box->currentIndex();
     switch(index){
     case 0:
         return;

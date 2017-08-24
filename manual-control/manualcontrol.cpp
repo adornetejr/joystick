@@ -1,37 +1,39 @@
 #include "manualcontrol.h"
 
-ManualControl::ManualControl()
+ManualControl::ManualControl():
+    id(0),
+    device_n(0),
+    max_velocity(0)
 {
-
 }
-ManualControl::ManualControl(int _id, string _device, int _velocity):
+ManualControl::ManualControl(int _id, int _device_n, int _velocity):
     id(_id),
-    device(_device),
+    device_n(_device_n),
     max_velocity(_velocity)
 {
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
-    axis = Mat<int>(2, 0);
+    axis = Mat_<int>(2, 0);
     initKinematicModel();
 }
 
 void ManualControl::run()
 {
+    joystick = new Joystick(device_n);
     bool button_send = false;
     bool axis_send = false;
-    joystick = new Joystick(device);
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
 
     while(1){
-        if(joystick->sample(&event)){
-            if(event.isButton()){
-                button_send = readEventButton(event);
+        if(joystick->sample(event)){
+            if(event->isButton()){
+                button_send = readEventButton(*event);
             }
 
-            if(event.isAxis()){
-                readEventAxis(event);
+            if(event->isAxis()){
+                readEventAxis(*event);
             }
         }
 
@@ -94,7 +96,7 @@ void ManualControl::readEventAxis(JoystickEvent _event)
     if(_event.number<2)
         axis[_event.number][0] = _event.value;
 }
-void ManualControl::verifyAxis()
+bool ManualControl::verifyAxis()
 {
     for(int i = 0 ; i<2 ; i++)
         if(axis[i][0]>=MIN_AXIS_VALUE || axis[i][0]<=-(MIN_AXIS_VALUE)) return true;

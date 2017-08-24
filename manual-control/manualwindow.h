@@ -2,6 +2,9 @@
 #define MANUALWINDOW_H
 
 #include <QMainWindow>
+#include <QPixmap>
+
+#include "manualcontrol.h"
 
 namespace Ui {
 class ManualWindow;
@@ -17,8 +20,11 @@ public:
 
 private:
     Ui::ManualWindow *ui;
-
     int player_num;
+
+    ManualControl *control;
+
+    void setEnabledInterface(char c);
 };
 
 #endif // MANUALWINDOW_H

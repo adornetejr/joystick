@@ -19,7 +19,7 @@ int PlayersDialog::getPlayers()
 }
 
 //QT Slots
-void PlayersDialog::on_playerBox_editingFinished()
+void PlayersDialog::on_ok_cancel_button_accepted()
 {
     n_players = ui->player_box->value();
 }

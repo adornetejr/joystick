@@ -15,6 +15,10 @@ INCLUDEPATH += manual-control \
                manual-control/joystick-master \
                communication
 
+LIBS += `pkg-config --libs --cflags opencv`
+#Classe Joystick foi transformada em uma biblioteca para nao precisar adicionar ela como souce do projeto
+LIBS += -L$$PWD/manual-control/joystick-master/ -ljoystick
+
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked as deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -40,5 +44,3 @@ HEADERS += mainwindow.h \
 FORMS += mainwindow.ui \
          manual-control/manualwindow.ui \
          manual-control/playersdialog.ui
-
-LIBS += `pkg-config --libs --cflags opencv`

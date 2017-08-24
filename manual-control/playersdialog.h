@@ -20,8 +20,6 @@ public:
 private slots:
     void on_ok_cancel_button_accepted();
 
-    void on_playerBox_editingFinished();
-
 private:
     Ui::PlayersDialog *ui;
     int n_players;

@@ -29,9 +29,9 @@ class ManualControl: public QThread
 private:
     int id;
 
-    string device;
+    int device_n;
     Joystick *joystick;
-    JoystickEvent event;
+    JoystickEvent *event;
 
     int max_velocity;
     Mat_<float> velocity;
@@ -51,7 +51,7 @@ private:
 
 public:
     ManualControl();
-    ManualControl(int _id, string _device, int _velocity);
+    ManualControl(int _id, int _device_n, int _velocity);
 
     void run();
 
