@@ -16,6 +16,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
 //QT slots
 void MainWindow::on_ok_button_clicked()
 {

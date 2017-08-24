@@ -20,12 +20,14 @@ public:
 
 private slots:
     void on_abrir_button_clicked();
+    void on_close_button_clicked();
+    void on_on_button_clicked(bool checked);
 
 private:
     Ui::ManualWindow *ui;
     int player_num;
 
-    //anualControl *control;
+    ManualControl *control;
 
     void setEnabledInterface(char c);
 };

@@ -13,9 +13,9 @@ TEMPLATE = app
 
 INCLUDEPATH += manual-control \
                manual-control/joystick-master \
-               communication
+               communication \
 
-LIBS += `pkg-config --libs --cflags opencv`
+LIBS += -lboost_system -lopencv_core
 #Classe Joystick foi transformada em uma biblioteca para nao precisar adicionar ela como souce do projeto
 LIBS += -L$$PWD/manual-control/joystick-master/ -ljoystick
 

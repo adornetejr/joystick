@@ -1,39 +1,35 @@
 #include "manualcontrol.h"
 
-ManualControl::ManualControl():
+bool rotating;
+
+ManualControl::ManualControl(int _device_n):
     id(0),
-    device_n(0),
+    device_n(_device_n),
     max_velocity(0)
 {
-}
-ManualControl::ManualControl(int _id, int _device_n, int _velocity):
-    id(_id),
-    device_n(_device_n),
-    max_velocity(_velocity)
-{
+    joystick = new Joystick(_device_n);
+
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
-    axis = Mat_<int>(2, 0);
+    axis = vector<short>(2, 0);
     initKinematicModel();
 }
 
 void ManualControl::run()
 {
-    joystick = new Joystick(device_n);
     bool button_send = false;
     bool axis_send = false;
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
-
     while(1){
-        if(joystick->sample(event)){
-            if(event->isButton()){
-                button_send = readEventButton(*event);
+        if(joystick->sample(&event)){
+            if(event.isButton()){
+                button_send = readEventButton();
             }
 
-            if(event->isAxis()){
-                readEventAxis(*event);
+            if(event.isAxis()){
+                readEventAxis();
             }
         }
 
@@ -43,12 +39,9 @@ void ManualControl::run()
             velocity[1][0] = 0.0;
         }
 
-        if(axis_send || button_send){
+        if(axis_send || button_send || rotating){
             calculateWheelsVelocity();
-            //manda o dado
         }
-
-        sleep(20);
     }
 }
 
@@ -61,15 +54,11 @@ void ManualControl::setId(int _id)
 {
     id = _id;
 }
-void ManualControl::setDevice(int _device_n)
-{
-    device_n = _device_n;
-}
 
 //Métodos do controle
-bool ManualControl::readEventButton(JoystickEvent _event)
+bool ManualControl::readEventButton()
 {
-    switch(_event.number){
+    switch(event.number){
     case 0:
         //low kick
     break;
@@ -100,15 +89,15 @@ bool ManualControl::readEventButton(JoystickEvent _event)
 
     return true;
 }
-void ManualControl::readEventAxis(JoystickEvent _event)
+void ManualControl::readEventAxis()
 {
-    if(_event.number<2)
-        axis[_event.number][0] = _event.value;
+    if(event.number == 0) axis[event.number] = event.value;
+    else if(event.number == 1) axis[event.number] = -(event.value);
 }
 bool ManualControl::verifyAxis()
 {
     for(int i = 0 ; i<2 ; i++)
-        if(axis[i][0]>=MIN_AXIS_VALUE || axis[i][0]<=-(MIN_AXIS_VALUE)) return true;
+        if(axis[i]>=MIN_AXIS || axis[i]<=-(MIN_AXIS)) return true;
     return false;
 }
 
@@ -142,12 +131,17 @@ void ManualControl::initKinematicModel()
 }
 void ManualControl::calculateVelocity()
 {
-    axis[1][0] = -axis[1][0];
-
-    for(int i = 0 ; i<2 ; i++)
-        velocity[i][0] = ((float)axis[i][0]/MAX_AXIS_VALUE)*max_velocity;
+    for(int i = 0 ; i<2 ; i++){
+        velocity[i][0] = ((float)axis[i]/MAX_AXIS)*(max_velocity/100.0);
+    }
 }
 void ManualControl::calculateWheelsVelocity()
 {
     velocity_wheels = M*velocity;
+    cout<<"1: "<<velocity_wheels[0][0]<<endl;
+    cout<<"2: "<<velocity_wheels[1][0]<<endl;
+    cout<<"3: "<<velocity_wheels[2][0]<<endl;
+    cout<<"4: "<<velocity_wheels[3][0]<<endl;
+
+
 }

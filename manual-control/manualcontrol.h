@@ -10,8 +10,8 @@
 
 #include "joystick.hh"
 
-#define MIN_AXIS_VALUE 5000
-#define MAX_AXIS_VALUE 32767
+#define MIN_AXIS 5000
+#define MAX_AXIS 32767
 
 using namespace std;
 using namespace cv;
@@ -31,7 +31,7 @@ private:
 
     int device_n;
     Joystick *joystick;
-    JoystickEvent *event;
+    JoystickEvent event;
 
     int max_velocity;
     Mat_<float> velocity;
@@ -39,25 +39,22 @@ private:
     Mat_<float> velocity_wheels;
     Mat_<Direction> direction_wheels;
 
-    Mat_<int> axis;
+    vector<short> axis;
 
     void initKinematicModel();
     void calculateVelocity();
     void calculateWheelsVelocity();
 
-    bool readEventButton(JoystickEvent _event);
-    void readEventAxis(JoystickEvent _event);
+    bool readEventButton();
+    void readEventAxis();
     bool verifyAxis();
 
 public:
-    ManualControl();
-    ManualControl(int _id, int _device_n, int _velocity);
-
+    ManualControl(int _device_n);
 
     void run();
 
     void setId(int _id);
-    void setDevice(int _device_n);
     void setMaxVelocity(int _velocity);
 };
 

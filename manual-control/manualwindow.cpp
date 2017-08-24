@@ -12,7 +12,7 @@ ManualWindow::ManualWindow(int _player, QWidget *parent) :
     ui->xbox_image->setPixmap(pix);
     setEnabledInterface('i');
 
- //   control = new ManualControl();
+    control = new ManualControl(player_num);
 }
 
 ManualWindow::~ManualWindow()
@@ -20,6 +20,7 @@ ManualWindow::~ManualWindow()
     delete ui;
 }
 
+//Interface
 void ManualWindow::setEnabledInterface(char c)
 {
     switch(c){
@@ -31,7 +32,7 @@ void ManualWindow::setEnabledInterface(char c)
         ui->on_button->setEnabled(false);
         ui->vel_box->setEnabled(false);
         ui->on_button->setChecked(false);
-    break;
+        break;
     case 'o':
         ui->abrir_button->setEnabled(false);
         ui->baud_box->setEnabled(false);
@@ -45,8 +46,25 @@ void ManualWindow::setEnabledInterface(char c)
     break;
     }
 }
-
 void ManualWindow::on_abrir_button_clicked()
 {
     setEnabledInterface('o');
+}
+void ManualWindow::on_close_button_clicked()
+{
+    setEnabledInterface('i');
+}
+
+void ManualWindow::on_on_button_clicked(bool checked)
+{
+    if(checked){
+        control->setId(ui->id_box->value());
+        control->setMaxVelocity(ui->vel_box->value());
+        control->start();
+        setEnabledInterface('c');
+    }
+    else{
+        control->exit();
+        setEnabledInterface('o');
+    }
 }
