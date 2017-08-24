@@ -52,9 +52,18 @@ void ManualControl::run()
     }
 }
 
+//Setters
 void ManualControl::setMaxVelocity(int _velocity)
 {
     max_velocity = _velocity;
+}
+void ManualControl::setId(int _id)
+{
+    id = _id;
+}
+void ManualControl::setDevice(int _device_n)
+{
+    device_n = _device_n;
 }
 
 //Métodos do controle

@@ -53,8 +53,11 @@ public:
     ManualControl();
     ManualControl(int _id, int _device_n, int _velocity);
 
+
     void run();
 
+    void setId(int _id);
+    void setDevice(int _device_n);
     void setMaxVelocity(int _velocity);
 };
 

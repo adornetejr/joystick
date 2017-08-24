@@ -11,6 +11,8 @@ ManualWindow::ManualWindow(int _player, QWidget *parent) :
     QPixmap pix("../joystick/images/control.svg");
     ui->xbox_image->setPixmap(pix);
     setEnabledInterface('i');
+
+ //   control = new ManualControl();
 }
 
 ManualWindow::~ManualWindow()
@@ -22,12 +24,18 @@ void ManualWindow::setEnabledInterface(char c)
 {
     switch(c){
     case 'i':
+        ui->abrir_button->setEnabled(true);
+        ui->baud_box->setEnabled(true);
+        ui->port_box->setEnabled(true);
         ui->xbox_image->setEnabled(false);
         ui->on_button->setEnabled(false);
         ui->vel_box->setEnabled(false);
         ui->on_button->setChecked(false);
     break;
     case 'o':
+        ui->abrir_button->setEnabled(false);
+        ui->baud_box->setEnabled(false);
+        ui->port_box->setEnabled(false);
         ui->xbox_image->setEnabled(false);
         ui->on_button->setEnabled(true);
         ui->vel_box->setEnabled(true);
@@ -36,4 +44,9 @@ void ManualWindow::setEnabledInterface(char c)
         ui->xbox_image->setEnabled(true);
     break;
     }
+}
+
+void ManualWindow::on_abrir_button_clicked()
+{
+    setEnabledInterface('o');
 }

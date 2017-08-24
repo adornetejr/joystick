@@ -18,11 +18,14 @@ public:
     explicit ManualWindow(int _player, QWidget *parent = 0);
     ~ManualWindow();
 
+private slots:
+    void on_abrir_button_clicked();
+
 private:
     Ui::ManualWindow *ui;
     int player_num;
 
-    ManualControl *control;
+    //anualControl *control;
 
     void setEnabledInterface(char c);
 };
