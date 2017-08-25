@@ -17,6 +17,7 @@ ManualWindow::ManualWindow(int _player, QWidget *parent) :
 
 ManualWindow::~ManualWindow()
 {
+    delete control;
     delete ui;
 }
 
@@ -64,7 +65,7 @@ void ManualWindow::on_on_button_clicked(bool checked)
         setEnabledInterface('c');
     }
     else{
-        control->exit();
+        control->stop();
         setEnabledInterface('o');
     }
 }

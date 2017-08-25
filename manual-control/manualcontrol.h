@@ -3,12 +3,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include <QThread>
+#include <thread>
 
 #include <opencv/cv.h>
 
 #include "joystick.hh"
+
+#include "ai2robotmessage.h"
 
 #define MIN_AXIS 5000
 #define MAX_AXIS 32767
@@ -16,17 +17,12 @@
 using namespace std;
 using namespace cv;
 
-enum Direction{
-    CLOCKWISE, COUNTERCLOCKWISE
-};
-
-enum KickType{
-    LOW, HIGH
-};
-
-class ManualControl: public QThread
+class ManualControl
 {
 private:
+    thread t;
+    bool done;
+
     int id;
 
     int device_n;
@@ -38,8 +34,11 @@ private:
     Mat_<float> M;
     Mat_<float> velocity_wheels;
     Mat_<Direction> direction_wheels;
+    bool rotating;
 
     vector<short> axis;
+
+    Ai2RobotMessage message;
 
     void initKinematicModel();
     void calculateVelocity();
@@ -49,10 +48,13 @@ private:
     void readEventAxis();
     bool verifyAxis();
 
+    void run();
+
 public:
     ManualControl(int _device_n);
 
-    void run();
+    void start();
+    void stop();
 
     void setId(int _id);
     void setMaxVelocity(int _velocity);

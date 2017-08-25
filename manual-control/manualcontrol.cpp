@@ -1,11 +1,11 @@
 #include "manualcontrol.h"
 
-bool rotating;
-
 ManualControl::ManualControl(int _device_n):
     id(0),
     device_n(_device_n),
-    max_velocity(0)
+    max_velocity(0),
+    done(false),
+    rotating(false)
 {
     joystick = new Joystick(_device_n);
 
@@ -15,14 +15,25 @@ ManualControl::ManualControl(int _device_n):
     initKinematicModel();
 }
 
+void ManualControl::start(){
+    done = false;
+    t = thread(&ManualControl::run, this);
+}
+void ManualControl::stop(){
+    done = true;
+    if(t.joinable()) t.join();
+}
 void ManualControl::run()
 {
+    message.setId(id);
     bool button_send = false;
     bool axis_send = false;
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
-    while(1){
+    int k = 0;
+    while(!done){
+        cout<<k++<<endl;
         if(joystick->sample(&event)){
             if(event.isButton()){
                 button_send = readEventButton();
@@ -39,6 +50,7 @@ void ManualControl::run()
             velocity[1][0] = 0.0;
         }
 
+        calculateWheelsVelocity();
         if(axis_send || button_send || rotating){
             calculateWheelsVelocity();
         }
@@ -60,27 +72,79 @@ bool ManualControl::readEventButton()
 {
     switch(event.number){
     case 0:
+        if(event.value){
+            message.setKick(true, LOW, 100);
+        }
+        else{
+            message.setKick(false, LOW, 0);
+        }
         //low kick
     break;
     case 1:
+        if(event.value){
+            message.setKick(true, HIGH, 100);
+        }
+        else{
+            message.setKick(false, LOW, 0);
+        }
         //high kick
     break;
     case 2:
+        if(event.value){
+            message.setKick(true, LOW, 100);
+        }
+        else{
+            message.setKick(false, LOW, 0);
+        }
         //low kick
     break;
     case 3:
+        if(event.value){
+            message.setKick(true, LOW, 100);
+        }
+        else{
+            message.setKick(false, LOW, 0);
+        }
         //low kick
     break;
     case 4:
+        if(event.value){
+            message.setDribbler(true, 60, CLOCKWISE);
+        }
+        else{
+            message.setDribbler(false, 0, CLOCKWISE);
+        }
+        rotating = event.value;
         //drible h
     break;
     case 5:
+        if(event.value){
+            message.setDribbler(true, 60, COUNTERCLOCKWISE);
+        }
+        else{
+            message.setDribbler(false, 0, CLOCKWISE);
+        }
+        rotating = event.value;
         //drible a-h
     break;
     case 6:
+        if(event.value){
+            velocity[2][0] = -(max_velocity/100.0);
+        }
+        else{
+            velocity[2][0] = 0.0;
+        }
+        rotating = event.value;
         //gira h
     break;
     case 7:
+        if(event.value){
+            velocity[2][0] = (max_velocity/100.0);
+        }
+        else{
+            velocity[2][0] = 0.0;
+        }
+        rotating = event.value;
         //gira a-h
     break;
     default:
@@ -101,7 +165,7 @@ bool ManualControl::verifyAxis()
     return false;
 }
 
-//Métodos cinemáticos
+//Métodos físicos
 void ManualControl::initKinematicModel()
 {
     //! Estas medidas estão em metros.
@@ -138,10 +202,14 @@ void ManualControl::calculateVelocity()
 void ManualControl::calculateWheelsVelocity()
 {
     velocity_wheels = M*velocity;
-    cout<<"1: "<<velocity_wheels[0][0]<<endl;
-    cout<<"2: "<<velocity_wheels[1][0]<<endl;
-    cout<<"3: "<<velocity_wheels[2][0]<<endl;
-    cout<<"4: "<<velocity_wheels[3][0]<<endl;
 
-
+    //Considerando 100 como a velocidade maxima, o percentual é o proprio valor passado para uchar
+    unsigned char percentual_velocity;
+    Direction direction;
+    for(int i = 0 ; i<4 ; i++){
+        percentual_velocity = (unsigned char)velocity_wheels[i][0];
+        cout<<i<<": "<<percentual_velocity<<endl;
+        direction = percentual_velocity>0 ? COUNTERCLOCKWISE : CLOCKWISE;
+        message.setWheel(i, percentual_velocity, direction);
+    }
 }
