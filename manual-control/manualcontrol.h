@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <thread>
+#include <mutex>
 
 #include <opencv/cv.h>
 
@@ -20,8 +21,9 @@ using namespace cv;
 class ManualControl
 {
 private:
-    thread t;
-    bool done;
+    bool running;
+    thread td;
+    mutex *mu;
 
     int id;
 
@@ -35,6 +37,7 @@ private:
     Mat_<float> velocity_wheels;
     Mat_<Direction> direction_wheels;
     bool rotating;
+    bool dribbling;
 
     vector<short> axis;
 
@@ -51,6 +54,7 @@ private:
     void run();
 
 public:
+    ManualControl();
     ManualControl(int _device_n);
 
     void start();

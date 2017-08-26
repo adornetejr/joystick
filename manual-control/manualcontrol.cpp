@@ -1,12 +1,17 @@
 #include "manualcontrol.h"
-
-ManualControl::ManualControl(int _device_n):
-    id(0),
-    device_n(_device_n),
-    max_velocity(0),
-    done(false),
-    rotating(false)
+ManualControl::ManualControl(): id(0), device_n(-1), max_velocity(0), running(false), rotating(false), dribbling(false)
 {
+    mu = new mutex();
+
+    velocity = Mat_<float>(3, 1);
+    velocity_wheels = Mat_<float>(4, 1);
+    axis = vector<short>(2, 0);
+    initKinematicModel();
+}
+ManualControl::ManualControl(int _device_n): id(0), device_n(_device_n), max_velocity(0), running(false), rotating(false), dribbling(false)
+{
+    mu = new mutex();
+
     joystick = new Joystick(_device_n);
 
     velocity = Mat_<float>(3, 1);
@@ -16,12 +21,15 @@ ManualControl::ManualControl(int _device_n):
 }
 
 void ManualControl::start(){
-    done = false;
-    t = thread(&ManualControl::run, this);
+    running = true;
+    td = thread(&ManualControl::run, this);
 }
 void ManualControl::stop(){
-    done = true;
-    if(t.joinable()) t.join();
+    {
+        lock_guard<mutex> lock(*mu);
+        running = false;
+    }
+    td.join();
 }
 void ManualControl::run()
 {
@@ -31,9 +39,8 @@ void ManualControl::run()
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
-    int k = 0;
-    while(!done){
-        cout<<k++<<endl;
+
+    while(running){
         if(joystick->sample(&event)){
             if(event.isButton()){
                 button_send = readEventButton();
@@ -50,9 +57,12 @@ void ManualControl::run()
             velocity[1][0] = 0.0;
         }
 
-        calculateWheelsVelocity();
-        if(axis_send || button_send || rotating){
+        if(axis_send || rotating){
             calculateWheelsVelocity();
+        }
+
+        if(axis_send || rotating || button_send || dribbling){
+            //manda o dado
         }
     }
 }
@@ -114,7 +124,7 @@ bool ManualControl::readEventButton()
         else{
             message.setDribbler(false, 0, CLOCKWISE);
         }
-        rotating = event.value;
+        dribbling = event.value;
         //drible h
     break;
     case 5:
@@ -124,7 +134,7 @@ bool ManualControl::readEventButton()
         else{
             message.setDribbler(false, 0, CLOCKWISE);
         }
-        rotating = event.value;
+        dribbling = event.value;
         //drible a-h
     break;
     case 6:
@@ -161,7 +171,7 @@ void ManualControl::readEventAxis()
 bool ManualControl::verifyAxis()
 {
     for(int i = 0 ; i<2 ; i++)
-        if(axis[i]>=MIN_AXIS || axis[i]<=-(MIN_AXIS)) return true;
+        if(abs(axis[i]) >= MIN_AXIS) return true;
     return false;
 }
 

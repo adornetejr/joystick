@@ -21,7 +21,7 @@ std::vector<unsigned char> Ai2RobotMessage::serialize()
 {
     std::vector<unsigned char> buffer(8, 0);
     buffer[0] = id;
-    for (int i = 1; i < wheels_velocity.size(); ++i)
+    for (unsigned int i = 1; i < wheels_velocity.size(); ++i)
         buffer[i] = wheels_velocity[i-1].value;
     buffer[5] = (enable_dribbler) ? dribbler_velocity.value : 0;
     buffer[6] = enable_kick << 6 |

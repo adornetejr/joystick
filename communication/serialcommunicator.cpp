@@ -11,6 +11,18 @@ SerialCommunicator::SerialCommunicator(std::string _device, int _baud_rate, int 
 
 }
 
+bool SerialCommunicator::set_options()
+{
+    try {
+        serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
+        serial.set_option(boost::asio::serial_port_base::character_size(8));
+        return true;
+    } catch (boost::system::system_error error) {
+        std::cout << "Comunicator Error: " << error.what() << std::endl;
+    }
+    return false;
+}
+
 bool SerialCommunicator::open()
 {
     close();
@@ -29,22 +41,28 @@ void SerialCommunicator::close()
         serial.close();
 }
 
-bool SerialCommunicator::set_options()
+void SerialCommunicator::start()
 {
-    try {
-        serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
-        serial.set_option(boost::asio::serial_port_base::character_size(8));
-        return true;
-    } catch (boost::system::system_error error) {
-        std::cout << "Comunicator Error: " << error.what() << std::endl;
-    }
-    return false;
+    if (!open()) return;
+    fill(sent_messages.begin(), sent_messages.end(), true);
+    running = true;
 }
 
-int SerialCommunicator::write(SerialMessage &message)
+void SerialCommunicator::stop()
+{
+    running = false;
+}
+
+void SerialCommunicator::addMessage(SerialMessage *message)
+{
+    buffer[message->getId()] = message;
+}
+
+void SerialCommunicator::write(SerialMessage &message)
 {
     lock_guard<mutex> lock(w_mutexes[message.getId()]);
-    buffer[message.getId()] = message;
+    buffer[message.getId()] = &message;
+    sent_messages[message.getId()] = false;
 }
 
 int SerialCommunicator::send(vector<unsigned char> encoded_message)
@@ -54,9 +72,20 @@ int SerialCommunicator::send(vector<unsigned char> encoded_message)
 
 void SerialCommunicator::operator ()()
 {
-   if (!open()) return;
-   lock_guard<mutex> lock(cv_on_mutex);
-   //cv_on.wait(lock, [](){ return running; });
+    unique_lock<mutex> start_lock(cv_run_mutex);
+    cout << "COMMUNICATOR WAIT...";
+    cv_run.wait(start_lock, [this](){ return running; });
+    cout << "COMMUNICATOR RUNNING!" << endl;
+    while (running) {
+        for (int i = 0; i < buffer_size; i++) {
+            w_mutexes[i].lock();
+            if (!sent_messages[i]) {
+                send(buffer[i]->serialize());
+                sent_messages[i] = true;
+            }
+            w_mutexes[i].unlock();
+        }
+    }
 }
 
 ostream &operator <<(ostream &stream, SerialCommunicator const &communicator) {

@@ -10,6 +10,7 @@ class SerialMessage
 {
 private:
     unsigned char id;
+    bool sent;
 public:
     SerialMessage();
     unsigned char getId();
