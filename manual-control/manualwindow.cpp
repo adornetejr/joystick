@@ -1,16 +1,19 @@
 #include "manualwindow.h"
 #include "ui_manualwindow.h"
 
-ManualWindow::ManualWindow(int _player, QWidget *parent) :
+ManualWindow::ManualWindow(int _player, SerialCommunicator<Ai2RobotMessage> *_serial, QWidget *parent) :
     player_num(_player),
+    serial(_serial),
     QMainWindow(parent),
     ui(new Ui::ManualWindow)
 {
     ui->setupUi(this);
 
     QPixmap pix("../joystick/images/control.svg");
+    QPixmap pix2("../joystick/images/logo-mini");
     ui->xbox_image->setPixmap(pix);
-    setEnabledInterface('i');
+    //ui->logo->setPixmap(pix2);
+    ui->xbox_image->setEnabled(false);
 
     control = new ManualControl(player_num);
 }
@@ -22,50 +25,19 @@ ManualWindow::~ManualWindow()
 }
 
 //Interface
-void ManualWindow::setEnabledInterface(char c)
-{
-    switch(c){
-    case 'i':
-        ui->abrir_button->setEnabled(true);
-        ui->baud_box->setEnabled(true);
-        ui->port_box->setEnabled(true);
-        ui->xbox_image->setEnabled(false);
-        ui->on_button->setEnabled(false);
-        ui->vel_box->setEnabled(false);
-        ui->on_button->setChecked(false);
-        break;
-    case 'o':
-        ui->abrir_button->setEnabled(false);
-        ui->baud_box->setEnabled(false);
-        ui->port_box->setEnabled(false);
-        ui->xbox_image->setEnabled(false);
-        ui->on_button->setEnabled(true);
-        ui->vel_box->setEnabled(true);
-    break;
-    case 'c':
-        ui->xbox_image->setEnabled(true);
-    break;
-    }
-}
-void ManualWindow::on_abrir_button_clicked()
-{
-    setEnabledInterface('o');
-}
-void ManualWindow::on_close_button_clicked()
-{
-    setEnabledInterface('i');
-}
-
 void ManualWindow::on_on_button_clicked(bool checked)
 {
     if(checked){
         control->setId(ui->id_box->value());
         control->setMaxVelocity(ui->vel_box->value());
+        control->setDribblerVelocity(ui->dri_box->value());
+        control->setKickPower(ui->kick_box->value());
+        control->setPassPower(ui->pass_box->value());
         control->start();
-        setEnabledInterface('c');
+        ui->xbox_image->setEnabled(true);
     }
     else{
         control->stop();
-        setEnabledInterface('o');
+        ui->xbox_image->setEnabled(true);
     }
 }

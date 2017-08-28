@@ -14,6 +14,7 @@
 
 #define MIN_AXIS 5000
 #define MAX_AXIS 32767
+#define KICK_TIMES 20
 
 using namespace std;
 using namespace cv;
@@ -30,16 +31,19 @@ private:
     int device_n;
     Joystick *joystick;
     JoystickEvent event;
+    vector<short> axis;
 
     int max_velocity;
+    int dribbler_velocity;
+    int kick_power;
+    int pass_power;
     Mat_<float> velocity;
     Mat_<float> M;
     Mat_<float> velocity_wheels;
     Mat_<Direction> direction_wheels;
     bool rotating;
     bool dribbling;
-
-    vector<short> axis;
+    unsigned int kicking;
 
     Ai2RobotMessage message;
 
@@ -62,6 +66,9 @@ public:
 
     void setId(int _id);
     void setMaxVelocity(int _velocity);
+    void setDribblerVelocity(int _velocity);
+    void setKickPower(int _power);
+    void setPassPower(int _power);
 };
 
 #endif // MANUALCONTROL_H

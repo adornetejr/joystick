@@ -26,13 +26,19 @@ void MainWindow::on_ok_button_clicked()
         return;
         break;
     case 1:
-        int n_players;
+        string device;
+        int baud_rate, n_players;
         if(players_ui->exec()){
             n_players = players_ui->getPlayers();
+            device = players_ui->getDevice();
+            baud_rate = players_ui->getBaudRate();
+
+            serial = new SerialCommunicator<Ai2RobotMessage>(device, baud_rate, n_players);
+            //if(!serial->open()) return;
 
             manual_uis = new ManualWindow*[n_players];
             for(int i = 0 ; i<n_players ; i++){
-                manual_uis[i] = new ManualWindow(i+1);
+                manual_uis[i] = new ManualWindow(i, serial);
                 manual_uis[i]->setWindowTitle("Player " + QString::number((i+1)));
                 manual_uis[i]->show();
             }

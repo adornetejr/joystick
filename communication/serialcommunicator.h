@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <vector>
+#include <thread>
 #include <mutex>
-#include <condition_variable>
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp>
 #include "serialmessage.h"
@@ -17,28 +17,112 @@ class SerialCommunicator
 private:
     boost::asio::io_service io;
     boost::asio::serial_port serial;
-    bool running;
-    mutex cv_run_mutex;
-    condition_variable cv_run;
     string device;
     int baud_rate;
+
+    bool running;
+    thread run_thread;
+    mutex *run_mutex;
+
     int buffer_size;
     vector<mutex> w_mutexes;
     vector<T> buffer;
     vector<bool> sent_messages;
-    bool set_options();
+
+    bool set_options()
+    {
+        try {
+            serial.set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
+            serial.set_option(boost::asio::serial_port_base::character_size(8));
+            return true;
+        } catch (boost::system::system_error error) {
+            std::cout << "Comunicator Error: " << error.what() << std::endl;
+        }
+        return false;
+    }
+
 public:
-    SerialCommunicator();
-    SerialCommunicator(string, int, int);
-    bool open();
-    void close();
-    void start();
-    void stop();
-    void addMessage(SerialMessage *);
-    void write(SerialMessage &);
-    int send(vector<unsigned char>);
-    void operator()();
-    friend ostream &operator <<(ostream &, SerialCommunicator const &);
+    SerialCommunicator(): io(), serial(io)
+    {
+        run_mutex = new mutex();
+    }
+    SerialCommunicator(string _device, int _baud_rate, int _buffer_size): io(), serial(io), device(_device), baud_rate(_baud_rate), buffer_size(_buffer_size), w_mutexes(buffer_size), buffer(buffer_size)
+    {
+        run_mutex = new mutex();
+    }
+
+    bool open()
+    {
+        close();
+        try {
+            serial.open(device);
+            return set_options();
+        } catch (boost::system::system_error error) {
+            std::cout << "Communicator Error: " << error.what() << std::endl;
+        }
+        return false;
+    }
+
+    void close()
+    {
+        if (serial.is_open())
+            serial.close();
+    }
+
+    void start()
+    {
+        if (!open()) return;
+        fill(sent_messages.begin(), sent_messages.end(), true);
+        running = true;
+        run_thread = thread(&SerialCommunicator::run, this);
+    }
+
+    void stop()
+    {
+        lock_guard<mutex> lock(*run_mutex);
+        running = false;
+        run_thread.join();
+    }
+
+    void addMessage(SerialMessage *message)
+    {
+        buffer[message->getId()] = message;
+    }
+
+    void write(SerialMessage &message)
+    {
+        lock_guard<mutex> lock(w_mutexes[message.getId()]);
+        buffer[message.getId()] = &message;
+        sent_messages[message.getId()] = false;
+    }
+
+    int send(vector<unsigned char> encoded_message)
+    {
+        return serial.write_some(boost::asio::buffer(encoded_message, encoded_message.size()));
+    }
+
+    void run()
+    {
+        while (running) {
+            for (int i = 0; i < buffer_size; i++) {
+                w_mutexes[i].lock();
+                if (!sent_messages[i]) {
+                    send(buffer[i]->serialize());
+                    sent_messages[i] = true;
+                }
+                w_mutexes[i].unlock();
+            }
+        }
+    }
+
+    friend ostream &operator <<(ostream &stream, SerialCommunicator const &communicator)
+    {
+       stream << "SerialCommunicator{ " << endl;
+       stream << "\tdevice: " << communicator.device << endl;
+       stream << "\tbaud_rate: " << communicator.baud_rate << endl;
+       stream << "};";
+       return stream;
+   }
 };
 
 #endif // SERIALCOMMUNICATOR_H

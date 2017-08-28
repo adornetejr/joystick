@@ -22,8 +22,10 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
     PlayersDialog *players_ui;
     ManualWindow **manual_uis;
+    SerialCommunicator<Ai2RobotMessage> *serial;
 };
 
 #endif // MAINWINDOW_H

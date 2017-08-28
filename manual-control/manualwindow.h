@@ -5,6 +5,7 @@
 #include <QPixmap>
 
 #include "manualcontrol.h"
+#include "serialcommunicator.h"
 
 namespace Ui {
 class ManualWindow;
@@ -15,12 +16,10 @@ class ManualWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit ManualWindow(int _player, QWidget *parent = 0);
+    explicit ManualWindow(int _player, SerialCommunicator<Ai2RobotMessage> *_serial, QWidget *parent = 0);
     ~ManualWindow();
 
 private slots:
-    void on_abrir_button_clicked();
-    void on_close_button_clicked();
     void on_on_button_clicked(bool checked);
 
 private:
@@ -28,8 +27,7 @@ private:
     int player_num;
 
     ManualControl *control;
-
-    void setEnabledInterface(char c);
+    SerialCommunicator<Ai2RobotMessage> *serial;
 };
 
 #endif // MANUALWINDOW_H

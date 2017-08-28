@@ -3,6 +3,10 @@
 
 #include <QDialog>
 
+#include <string>
+
+using namespace std;
+
 namespace Ui {
 class PlayersDialog;
 }
@@ -16,6 +20,8 @@ public:
     ~PlayersDialog();
 
     int getPlayers();
+    string getDevice();
+    int getBaudRate();
 
 private slots:
     void on_ok_cancel_button_accepted();
@@ -23,6 +29,9 @@ private slots:
 private:
     Ui::PlayersDialog *ui;
     int n_players;
+
+    string device;
+    int baud_rate;
 };
 
 #endif // PLAYERSDIALOG_H

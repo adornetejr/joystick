@@ -1,5 +1,5 @@
 #include "manualcontrol.h"
-ManualControl::ManualControl(): id(0), device_n(-1), max_velocity(0), running(false), rotating(false), dribbling(false)
+ManualControl::ManualControl(): id(0), device_n(-1), max_velocity(0), running(false), rotating(false), dribbling(false), kicking(0)
 {
     mu = new mutex();
 
@@ -8,7 +8,7 @@ ManualControl::ManualControl(): id(0), device_n(-1), max_velocity(0), running(fa
     axis = vector<short>(2, 0);
     initKinematicModel();
 }
-ManualControl::ManualControl(int _device_n): id(0), device_n(_device_n), max_velocity(0), running(false), rotating(false), dribbling(false)
+ManualControl::ManualControl(int _device_n): id(0), device_n(_device_n), max_velocity(0), running(false), rotating(false), dribbling(false), kicking(0)
 {
     mu = new mutex();
 
@@ -51,6 +51,8 @@ void ManualControl::run()
             }
         }
 
+        if(kicking>=KICK_TIMES) kicking = 0;
+
         if(axis_send = verifyAxis()) calculateVelocity();
         else {
             velocity[0][0] = 0.0;
@@ -61,9 +63,11 @@ void ManualControl::run()
             calculateWheelsVelocity();
         }
 
-        if(axis_send || rotating || button_send || dribbling){
+        if(axis_send || rotating || button_send || dribbling || kicking){
             //manda o dado
         }
+
+        if(kicking) kicking++;
     }
 }
 
@@ -76,6 +80,18 @@ void ManualControl::setId(int _id)
 {
     id = _id;
 }
+void ManualControl::setDribblerVelocity(int _velocity)
+{
+    dribbler_velocity = _velocity;
+}
+void ManualControl::setKickPower(int _power)
+{
+    kick_power = _power;
+}
+void ManualControl::setPassPower(int _power)
+{
+    pass_power = _power;
+}
 
 //Métodos do controle
 bool ManualControl::readEventButton()
@@ -83,7 +99,8 @@ bool ManualControl::readEventButton()
     switch(event.number){
     case 0:
         if(event.value){
-            message.setKick(true, LOW, 100);
+            message.setKick(true, LOW, pass_power);
+            kicking = 1;
         }
         else{
             message.setKick(false, LOW, 0);
@@ -92,7 +109,8 @@ bool ManualControl::readEventButton()
     break;
     case 1:
         if(event.value){
-            message.setKick(true, HIGH, 100);
+            message.setKick(true, HIGH, kick_power);
+            kicking = 1;
         }
         else{
             message.setKick(false, LOW, 0);
@@ -101,7 +119,8 @@ bool ManualControl::readEventButton()
     break;
     case 2:
         if(event.value){
-            message.setKick(true, LOW, 100);
+            message.setKick(true, LOW, kick_power);
+            kicking = 1;
         }
         else{
             message.setKick(false, LOW, 0);
@@ -110,7 +129,8 @@ bool ManualControl::readEventButton()
     break;
     case 3:
         if(event.value){
-            message.setKick(true, LOW, 100);
+            message.setKick(true, LOW, kick_power);
+            kicking = 1;
         }
         else{
             message.setKick(false, LOW, 0);
@@ -119,7 +139,7 @@ bool ManualControl::readEventButton()
     break;
     case 4:
         if(event.value){
-            message.setDribbler(true, 60, CLOCKWISE);
+            message.setDribbler(true, dribbler_velocity, CLOCKWISE);
         }
         else{
             message.setDribbler(false, 0, CLOCKWISE);
@@ -129,7 +149,7 @@ bool ManualControl::readEventButton()
     break;
     case 5:
         if(event.value){
-            message.setDribbler(true, 60, COUNTERCLOCKWISE);
+            message.setDribbler(true, dribbler_velocity, COUNTERCLOCKWISE);
         }
         else{
             message.setDribbler(false, 0, CLOCKWISE);
