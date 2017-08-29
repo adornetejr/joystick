@@ -2,6 +2,7 @@
 #define TEAMPROTOCOL_H
 
 #include <iostream>
+#include <cstdio>
 #include <algorithm>
 #include "serialmessage.h"
 using namespace std;
@@ -36,14 +37,14 @@ public:
     /**
     \brief Função para serializar os dados para envio serial
 
-        0 | ID
-        1 | Velocidade Motor 1
-        2 | Velocidade Motor 2
-        3 | Velocidade Motor 3
-        4 | Velocidade Motor 4
-        5 | Velocidade Driblador
-        6 | X | Enable | Mode | DirDR | Dir4 | Dir3 | Dir2 | Dir1
-        7 | Força
+        1 | ID
+        0 | Velocidade Motor 1
+        0 | Velocidade Motor 2
+        0 | Velocidade Motor 3
+        0 | Velocidade Motor 4
+        0 | Velocidade Driblador
+        0 | X | X | DirDR | Dir4 | Dir3 | Dir2 | Dir1
+        0 | X | Enable | Modo | Força
 
     \return Dados serializados em um vector de char(byte).
     */

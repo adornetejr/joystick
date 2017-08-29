@@ -46,7 +46,8 @@ public:
     {
         run_mutex = new mutex();
     }
-    SerialCommunicator(string _device, int _baud_rate, int _buffer_size): io(), serial(io), device(_device), baud_rate(_baud_rate), buffer_size(_buffer_size), w_mutexes(buffer_size), buffer(buffer_size)
+    SerialCommunicator(string _device, int _baud_rate, int _buffer_size): io(), serial(io), device(_device), baud_rate(_baud_rate),
+        buffer_size(_buffer_size), w_mutexes(buffer_size), buffer(buffer_size), sent_messages(buffer_size)
     {
         run_mutex = new mutex();
     }
@@ -58,7 +59,7 @@ public:
             serial.open(device);
             return set_options();
         } catch (boost::system::system_error error) {
-            std::cout << "Communicator Error: " << error.what() << std::endl;
+            std::cout << "Erro de comunicação: " << error.what() << std::endl;
         }
         return false;
     }
@@ -69,12 +70,13 @@ public:
             serial.close();
     }
 
-    void start()
+    bool start()
     {
-        if (!open()) return;
+        if (!open()) return false;
         fill(sent_messages.begin(), sent_messages.end(), true);
         running = true;
         run_thread = thread(&SerialCommunicator::run, this);
+        return true;
     }
 
     void stop()
@@ -84,15 +86,10 @@ public:
         run_thread.join();
     }
 
-    void addMessage(SerialMessage *message)
-    {
-        buffer[message->getId()] = message;
-    }
-
-    void write(SerialMessage &message)
+    void write(T &message)
     {
         lock_guard<mutex> lock(w_mutexes[message.getId()]);
-        buffer[message.getId()] = &message;
+        buffer[message.getId()] = message;
         sent_messages[message.getId()] = false;
     }
 
@@ -107,7 +104,8 @@ public:
             for (int i = 0; i < buffer_size; i++) {
                 w_mutexes[i].lock();
                 if (!sent_messages[i]) {
-                    send(buffer[i]->serialize());
+                    send(buffer[i].serialize());
+                    //cout<<"Mensagem enviada, ID: "<<i<<endl;
                     sent_messages[i] = true;
                 }
                 w_mutexes[i].unlock();

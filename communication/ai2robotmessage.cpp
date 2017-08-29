@@ -1,8 +1,11 @@
 #include "ai2robotmessage.h"
 
-Ai2RobotMessage::Ai2RobotMessage() : id(-1), wheels_velocity(4, velocity{0, CLOCKWISE}), dribbler_velocity(velocity{0, CLOCKWISE})
+Ai2RobotMessage::Ai2RobotMessage() : id(0), wheels_velocity(4, velocity{0, CLOCKWISE}), dribbler_velocity(velocity{0, CLOCKWISE})
 {
-
+    enable_dribbler = false;
+    enable_kick = false;
+    kick_type = LOW;
+    kick_level = 0;
 }
 
 void Ai2RobotMessage::setId(unsigned char _id)
@@ -15,20 +18,44 @@ void Ai2RobotMessage::clear()
     id = 0;
     fill(wheels_velocity.begin(), wheels_velocity.end(), velocity{0, CLOCKWISE});
     dribbler_velocity = velocity{0, CLOCKWISE};
+    enable_dribbler = false;
+    enable_kick = false;
+    kick_type = LOW;
+    kick_level = 0;
 }
 
 std::vector<unsigned char> Ai2RobotMessage::serialize()
 {
+    //cout<<"=========================PACOTE====================================\n"<<endl;
+    //printf("%u\n",id);
+    //printf("%u\n",wheels_velocity[0].value);
+    //printf("%u\n",wheels_velocity[1].value);
+    //printf("%u\n",wheels_velocity[2].value);
+    //printf("%u\n",wheels_velocity[3].value);
+    //printf("%u\n",dribbler_velocity.value);
+    //printf("%u | %u | %u | %u | %u\n",dribbler_velocity.direction,wheels_velocity[0].direction,wheels_velocity[1].direction,wheels_velocity[2].direction,wheels_velocity[3].direction);
+    //printf("%d | %d | %u\n",enable_kick==false?0:1,kick_type,kick_level);
+    //printf("%s\n",enable_dribbler==true?"Enabled":"Nao");
+
     std::vector<unsigned char> buffer(8, 0);
-    buffer[0] = id;
-    for (unsigned int i = 1; i < wheels_velocity.size(); ++i)
-        buffer[i] = wheels_velocity[i-1].value;
-    buffer[5] = (enable_dribbler) ? dribbler_velocity.value : 0;
-    buffer[6] = enable_kick << 6 |
-        kick_type << 5 | dribbler_velocity.direction << 4 |
-        wheels_velocity[3].direction << 3 | wheels_velocity[2].direction << 2 |
-        wheels_velocity[1].direction << 1 | wheels_velocity[0].direction;
-    buffer[7] = kick_level;
+    buffer[0]=id;
+
+    for(int i=1;i<5;i++){
+        buffer[i] = (wheels_velocity[i-1].value);
+    }
+
+    buffer[5] = (enable_dribbler && !enable_kick) ? dribbler_velocity.value : 0;
+
+    buffer[6]=0;
+    buffer[6] = dribbler_velocity.direction << 4 | wheels_velocity[3].direction << 3 | wheels_velocity[2].direction << 2 | wheels_velocity[1].direction << 1 | wheels_velocity[0].direction;
+
+    unsigned char kick_bits;
+
+    if(!enable_kick) kick_bits = 0;
+    else kick_bits = kick_type ? 3 : 2;
+
+    kick_bits |= enable_kick << 2 ;
+    buffer[7] = kick_bits << 4 | kick_level;
     return buffer;
 }
 

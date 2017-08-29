@@ -1,14 +1,17 @@
 #include "manualcontrol.h"
-ManualControl::ManualControl(): id(0), device_n(-1), max_velocity(0), running(false), rotating(false), dribbling(false), kicking(0)
+ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false),
+    kicking(0), serial()
 {
     mu = new mutex();
 
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
     axis = vector<short>(2, 0);
+    robot_angle = 90.0*M_PI/180.0;
     initKinematicModel();
 }
-ManualControl::ManualControl(int _device_n): id(0), device_n(_device_n), max_velocity(0), running(false), rotating(false), dribbling(false), kicking(0)
+ManualControl::ManualControl(int _device_n, SerialCommunicator<Ai2RobotMessage> *_serial): device_n(_device_n),
+    max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false), kicking(0), serial(_serial)
 {
     mu = new mutex();
 
@@ -17,7 +20,15 @@ ManualControl::ManualControl(int _device_n): id(0), device_n(_device_n), max_vel
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
     axis = vector<short>(2, 0);
+    robot_angle = 90.0*M_PI/180.0;
     initKinematicModel();
+
+    cout<<*(serial)<<endl;
+}
+
+ManualControl::~ManualControl()
+{
+    this->stop();
 }
 
 void ManualControl::start(){
@@ -33,7 +44,6 @@ void ManualControl::stop(){
 }
 void ManualControl::run()
 {
-    message.setId(id);
     bool button_send = false;
     bool axis_send = false;
     if(!joystick->isFound()){
@@ -45,13 +55,22 @@ void ManualControl::run()
             if(event.isButton()){
                 button_send = readEventButton();
             }
+            else button_send = false;
 
             if(event.isAxis()){
                 readEventAxis();
             }
+            else axis_send = false;
+        }
+        else{
+            button_send = axis_send = false;
         }
 
-        if(kicking>=KICK_TIMES) kicking = 0;
+        if(kicking>=KICK_TIMES){
+            kicking = 0;
+            message.setKick(false, LOW, 0);
+            button_send = true; //manda mais um dado setando o chute para 0 (bug no código arduino do robô)
+        }
 
         if(axis_send = verifyAxis()) calculateVelocity();
         else {
@@ -59,26 +78,30 @@ void ManualControl::run()
             velocity[1][0] = 0.0;
         }
 
-        if(axis_send || rotating){
-            calculateWheelsVelocity();
-        }
-
         if(axis_send || rotating || button_send || dribbling || kicking){
-            //manda o dado
+            cout<<"Mensagem adcionada: "<<endl;
+            cout<<message<<endl;
+            calculateWheelsVelocity();
+            serial->write(message);
         }
 
-        if(kicking) kicking++;
+        if(kicking) ++kicking;
     }
+    message.clear();
 }
 
 //Setters
-void ManualControl::setMaxVelocity(int _velocity)
+void ManualControl::setMaxVelocity(float _velocity)
 {
     max_velocity = _velocity;
 }
+void ManualControl::setMaxAngularVelocity(float _velocity)
+{
+    max_ang_velocity = _velocity;
+}
 void ManualControl::setId(int _id)
 {
-    id = _id;
+    message.setId(_id);
 }
 void ManualControl::setDribblerVelocity(int _velocity)
 {
@@ -102,18 +125,12 @@ bool ManualControl::readEventButton()
             message.setKick(true, LOW, pass_power);
             kicking = 1;
         }
-        else{
-            message.setKick(false, LOW, 0);
-        }
         //low kick
     break;
     case 1:
         if(event.value){
             message.setKick(true, HIGH, kick_power);
             kicking = 1;
-        }
-        else{
-            message.setKick(false, LOW, 0);
         }
         //high kick
     break;
@@ -122,18 +139,12 @@ bool ManualControl::readEventButton()
             message.setKick(true, LOW, kick_power);
             kicking = 1;
         }
-        else{
-            message.setKick(false, LOW, 0);
-        }
         //low kick
     break;
     case 3:
         if(event.value){
             message.setKick(true, LOW, kick_power);
             kicking = 1;
-        }
-        else{
-            message.setKick(false, LOW, 0);
         }
         //low kick
     break;
@@ -159,7 +170,7 @@ bool ManualControl::readEventButton()
     break;
     case 6:
         if(event.value){
-            velocity[2][0] = -(max_velocity/100.0);
+            velocity[2][0] = max_ang_velocity;
         }
         else{
             velocity[2][0] = 0.0;
@@ -169,7 +180,7 @@ bool ManualControl::readEventButton()
     break;
     case 7:
         if(event.value){
-            velocity[2][0] = (max_velocity/100.0);
+            velocity[2][0] = -max_ang_velocity;
         }
         else{
             velocity[2][0] = 0.0;
@@ -181,7 +192,7 @@ bool ManualControl::readEventButton()
         return false;
     }
 
-    return true;
+    return event.value;
 }
 void ManualControl::readEventAxis()
 {
@@ -213,9 +224,10 @@ void ManualControl::initKinematicModel()
     alpha1 = 45.0*M_PI/180.0;   //45°
     alpha2 = 37.0*M_PI/180.0;   //37°
 
+    R = Mat_<float>::eye(3,3);
     //inicializa a matriz M
     /// Aqui é quando inicializamos a matriz M especificado utilizando os valores do robo
-    M = cv::Mat_<float>(4,3);
+    M = Mat_<float>(4,3);
     M[0][0] = -cos(alpha1);     M[0][1] = sin(alpha1);     M[0][2] = -radius_robot;
     M[1][0] = -cos(alpha2);     M[1][1] = -sin(alpha2);    M[1][2] = -radius_robot;
     M[2][0] =  cos(alpha2);     M[2][1] = -sin(alpha2);    M[2][2] = -radius_robot;
@@ -226,20 +238,24 @@ void ManualControl::initKinematicModel()
 void ManualControl::calculateVelocity()
 {
     for(int i = 0 ; i<2 ; i++){
-        velocity[i][0] = ((float)axis[i]/MAX_AXIS)*(max_velocity/100.0);
+        velocity[i][0] = ((float)axis[i]/MAX_AXIS)*max_velocity;
     }
 }
 void ManualControl::calculateWheelsVelocity()
 {
-    velocity_wheels = M*velocity;
+    /*Rotação para o modelo cinemático, porque ele é feito considerando o (x, y) do campo
+      e não do robô, onde a frente seria o y(+)*/
+    R[0][0] = cos(robot_angle);  R[0][1] = sin(robot_angle);
+    R[1][0] = -sin(robot_angle); R[1][1] = cos(robot_angle);
 
-    //Considerando 100 como a velocidade maxima, o percentual é o proprio valor passado para uchar
+    velocity_wheels = M*R*velocity;
+
     unsigned char percentual_velocity;
     Direction direction;
     for(int i = 0 ; i<4 ; i++){
-        percentual_velocity = (unsigned char)velocity_wheels[i][0];
-        cout<<i<<": "<<percentual_velocity<<endl;
-        direction = percentual_velocity>0 ? COUNTERCLOCKWISE : CLOCKWISE;
+        percentual_velocity = (unsigned char)fabs(velocity_wheels[i][0]);
+        percentual_velocity = percentual_velocity>127 ? 127 : percentual_velocity;
+        direction = velocity_wheels[i][0]>0 ? COUNTERCLOCKWISE : CLOCKWISE;
         message.setWheel(i, percentual_velocity, direction);
     }
 }

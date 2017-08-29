@@ -34,7 +34,7 @@ void MainWindow::on_ok_button_clicked()
             baud_rate = players_ui->getBaudRate();
 
             serial = new SerialCommunicator<Ai2RobotMessage>(device, baud_rate, n_players);
-            //if(!serial->open()) return;
+            if(!serial->start()) return;
 
             manual_uis = new ManualWindow*[n_players];
             for(int i = 0 ; i<n_players ; i++){

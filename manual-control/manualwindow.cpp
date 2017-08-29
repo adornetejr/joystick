@@ -15,7 +15,7 @@ ManualWindow::ManualWindow(int _player, SerialCommunicator<Ai2RobotMessage> *_se
     //ui->logo->setPixmap(pix2);
     ui->xbox_image->setEnabled(false);
 
-    control = new ManualControl(player_num);
+    control = new ManualControl(player_num, serial);
 }
 
 ManualWindow::~ManualWindow()
@@ -30,6 +30,7 @@ void ManualWindow::on_on_button_clicked(bool checked)
     if(checked){
         control->setId(ui->id_box->value());
         control->setMaxVelocity(ui->vel_box->value());
+        control->setMaxAngularVelocity(ui->ang_box->value());
         control->setDribblerVelocity(ui->dri_box->value());
         control->setKickPower(ui->kick_box->value());
         control->setPassPower(ui->pass_box->value());

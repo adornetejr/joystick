@@ -17,7 +17,7 @@ INCLUDEPATH += manual-control \
                manual-control/joystick-master \
                communication
 
-LIBS += -lboost_system -lopencv_core
+LIBS += -lboost_system -lopencv_core -pthread
 LIBS += -L$$PWD/manual-control/joystick-master/ -ljoystick
 
 # The following define makes your compiler emit warnings if you use
