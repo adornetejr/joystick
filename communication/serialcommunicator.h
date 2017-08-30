@@ -70,7 +70,7 @@ public:
 
     bool start()
     {
-        //if (!open()) return false;
+        if (!open()) return false;
         fill(sent_messages.begin(), sent_messages.end(), true);
         running = true;
         run_thread = thread(&SerialCommunicator::run, this);
@@ -89,11 +89,8 @@ public:
     void write(T message)
     {
         lock_guard<mutex> lock(buffer_mutex[message.getId()]);
-        //buffer_mutex[message.getId()].lock();
         buffer[message.getId()] = message;
         sent_messages[message.getId()] = false;
-        //buffer_mutex[message.getId()].unlock();
-
     }
 
     int send(vector<unsigned char> encoded_message)
@@ -106,8 +103,7 @@ public:
         while (running) {
             for (int i = 0; i < buffer_size; i++) {
                 if (!sent_messages[i]) {
-                    buffer[i].serialize();
-                    //send(buffer[i].serialize());
+                    send(buffer[i].serialize());
                     cout<<"Mensagem enviada, ID: "<<i<<endl;
                     sent_messages[i] = true;
                 }

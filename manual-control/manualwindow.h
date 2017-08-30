@@ -22,6 +22,18 @@ public:
 private slots:
     void on_on_button_clicked(bool checked);
 
+    void on_id_box_editingFinished();
+
+    void on_ang_box_editingFinished();
+
+    void on_vel_box_editingFinished();
+
+    void on_dri_box_editingFinished();
+
+    void on_kick_box_editingFinished();
+
+    void on_pass_box_editingFinished();
+
 private:
     Ui::ManualWindow *ui;
     int player_num;

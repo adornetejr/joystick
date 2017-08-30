@@ -42,3 +42,33 @@ void ManualWindow::on_on_button_clicked(bool checked)
         ui->xbox_image->setEnabled(true);
     }
 }
+
+void ManualWindow::on_id_box_editingFinished()
+{
+    control->setId(ui->id_box->value());
+}
+
+void ManualWindow::on_ang_box_editingFinished()
+{
+    control->setMaxAngularVelocity(ui->ang_box->value());
+}
+
+void ManualWindow::on_vel_box_editingFinished()
+{
+    control->setMaxVelocity(ui->vel_box->value());
+}
+
+void ManualWindow::on_dri_box_editingFinished()
+{
+    control->setDribblerVelocity(ui->dri_box->value());
+}
+
+void ManualWindow::on_kick_box_editingFinished()
+{
+    control->setKickPower(ui->kick_box->value());
+}
+
+void ManualWindow::on_pass_box_editingFinished()
+{
+    control->setPassPower(ui->pass_box->value());
+}
