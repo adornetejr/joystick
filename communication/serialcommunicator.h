@@ -22,10 +22,10 @@ private:
 
     bool running;
     thread run_thread;
-    mutex *run_mutex;
+    mutex run_mutex;
 
     int buffer_size;
-    vector<mutex> w_mutexes;
+    vector<mutex> buffer_mutex;
     vector<T> buffer;
     vector<bool> sent_messages;
 
@@ -44,12 +44,10 @@ private:
 public:
     SerialCommunicator(): io(), serial(io)
     {
-        run_mutex = new mutex();
     }
     SerialCommunicator(string _device, int _baud_rate, int _buffer_size): io(), serial(io), device(_device), baud_rate(_baud_rate),
-        buffer_size(_buffer_size), w_mutexes(buffer_size), buffer(buffer_size), sent_messages(buffer_size)
+        buffer_size(_buffer_size), buffer(buffer_size), buffer_mutex(buffer_size), sent_messages(buffer_size)
     {
-        run_mutex = new mutex();
     }
 
     bool open()
@@ -72,7 +70,7 @@ public:
 
     bool start()
     {
-        if (!open()) return false;
+        //if (!open()) return false;
         fill(sent_messages.begin(), sent_messages.end(), true);
         running = true;
         run_thread = thread(&SerialCommunicator::run, this);
@@ -81,16 +79,21 @@ public:
 
     void stop()
     {
-        lock_guard<mutex> lock(*run_mutex);
-        running = false;
+        {
+            lock_guard<mutex> lock(run_mutex);
+            running = false;
+        }
         run_thread.join();
     }
 
-    void write(T &message)
+    void write(T message)
     {
-        lock_guard<mutex> lock(w_mutexes[message.getId()]);
+        lock_guard<mutex> lock(buffer_mutex[message.getId()]);
+        //buffer_mutex[message.getId()].lock();
         buffer[message.getId()] = message;
         sent_messages[message.getId()] = false;
+        //buffer_mutex[message.getId()].unlock();
+
     }
 
     int send(vector<unsigned char> encoded_message)
@@ -102,13 +105,12 @@ public:
     {
         while (running) {
             for (int i = 0; i < buffer_size; i++) {
-                w_mutexes[i].lock();
                 if (!sent_messages[i]) {
-                    send(buffer[i].serialize());
-                    //cout<<"Mensagem enviada, ID: "<<i<<endl;
+                    buffer[i].serialize();
+                    //send(buffer[i].serialize());
+                    cout<<"Mensagem enviada, ID: "<<i<<endl;
                     sent_messages[i] = true;
                 }
-                w_mutexes[i].unlock();
             }
         }
     }

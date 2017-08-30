@@ -26,7 +26,7 @@ class ManualControl
 private:
     bool running;
     thread td;
-    mutex *mu;
+    mutex mu;
 
     int device_n;
     Joystick *joystick;

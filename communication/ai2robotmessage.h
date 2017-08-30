@@ -33,6 +33,7 @@ private:
 public:
     Ai2RobotMessage();
     void setId(unsigned char);
+    unsigned char getId();
     void clear();
     /**
     \brief Função para serializar os dados para envio serial

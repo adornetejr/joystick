@@ -1,6 +1,6 @@
 #include "ai2robotmessage.h"
 
-Ai2RobotMessage::Ai2RobotMessage() : id(0), wheels_velocity(4, velocity{0, CLOCKWISE}), dribbler_velocity(velocity{0, CLOCKWISE})
+Ai2RobotMessage::Ai2RobotMessage() : id(128), wheels_velocity(4, velocity{0, CLOCKWISE}), dribbler_velocity(velocity{0, CLOCKWISE})
 {
     enable_dribbler = false;
     enable_kick = false;
@@ -11,6 +11,10 @@ Ai2RobotMessage::Ai2RobotMessage() : id(0), wheels_velocity(4, velocity{0, CLOCK
 void Ai2RobotMessage::setId(unsigned char _id)
 {
     id  = 128 + _id;
+}
+unsigned char Ai2RobotMessage::getId()
+{
+    return (id - 128);
 }
 
 void Ai2RobotMessage::clear()
@@ -26,13 +30,13 @@ void Ai2RobotMessage::clear()
 
 std::vector<unsigned char> Ai2RobotMessage::serialize()
 {
-    //cout<<"=========================PACOTE====================================\n"<<endl;
-    //printf("%u\n",id);
-    //printf("%u\n",wheels_velocity[0].value);
-    //printf("%u\n",wheels_velocity[1].value);
-    //printf("%u\n",wheels_velocity[2].value);
-    //printf("%u\n",wheels_velocity[3].value);
-    //printf("%u\n",dribbler_velocity.value);
+    cout<<"=========================PACOTE====================================\n"<<endl;
+    printf("%u\n",id);
+    printf("%u\n",wheels_velocity[0].value);
+    printf("%u\n",wheels_velocity[1].value);
+    printf("%u\n",wheels_velocity[2].value);
+    printf("%u\n",wheels_velocity[3].value);
+    printf("%u\n",dribbler_velocity.value);
     //printf("%u | %u | %u | %u | %u\n",dribbler_velocity.direction,wheels_velocity[0].direction,wheels_velocity[1].direction,wheels_velocity[2].direction,wheels_velocity[3].direction);
     //printf("%d | %d | %u\n",enable_kick==false?0:1,kick_type,kick_level);
     //printf("%s\n",enable_dribbler==true?"Enabled":"Nao");

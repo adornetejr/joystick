@@ -2,28 +2,26 @@
 ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false),
     kicking(0), serial()
 {
-    mu = new mutex();
+   // mu = new mutex();
 
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
     axis = vector<short>(2, 0);
-    robot_angle = 90.0*M_PI/180.0;
+    robot_angle = M_PI/2.0;
     initKinematicModel();
 }
 ManualControl::ManualControl(int _device_n, SerialCommunicator<Ai2RobotMessage> *_serial): device_n(_device_n),
     max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false), kicking(0), serial(_serial)
 {
-    mu = new mutex();
+   // mu = new mutex();
 
     joystick = new Joystick(_device_n);
 
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
     axis = vector<short>(2, 0);
-    robot_angle = 90.0*M_PI/180.0;
+    robot_angle = M_PI/2.0;
     initKinematicModel();
-
-    cout<<*(serial)<<endl;
 }
 
 ManualControl::~ManualControl()
@@ -37,7 +35,7 @@ void ManualControl::start(){
 }
 void ManualControl::stop(){
     {
-        lock_guard<mutex> lock(*mu);
+        lock_guard<mutex> lock(mu);
         running = false;
     }
     td.join();
@@ -49,6 +47,8 @@ void ManualControl::run()
     if(!joystick->isFound()){
         cout<<"Falha ao abrir o controle."<<endl;
     }
+
+    //serial->write(message);
 
     while(running){
         if(joystick->sample(&event)){
