@@ -21,44 +21,70 @@
 using namespace std;
 using namespace cv;
 
+/*!
+ * \brief The ManualControl class administra uma thread para fazer leitura do joystick, montagem do pacote serial
+ * e adição na lista para envio da thread SerialCommunicator
+ */
 class ManualControl
 {
 private:
-    bool running;
-    thread td;
-    mutex mu;
+    bool running; //!<Flag de controle de execução da Thread
+    thread td; //!<Thread da classe
+    mutex mu; //!<Mutex para escrita na flag running
 
-    int device_n;
-    Joystick *joystick;
-    JoystickEvent event;
-    vector<short> axis;
+    int device_n; //!<Número do joystick utilizado pela thread
+    Joystick *joystick; //!<Objeto da classe Joystick para fazer leitura do arquivo em que o joystick escreve seus dados
+    JoystickEvent event; //!<Objeto da classe JoystickEvent para verificar se houve algum evento no joystick que deve ser processado
+    vector<short> axis; //!<Vetor que guarda o valor dos analógicos do joystick
 
-    float max_velocity;
-    float max_ang_velocity;
-    int dribbler_velocity;
-    int kick_power;
-    int pass_power;
-    Mat_<float> velocity;
-    Mat_<float> M;
-    Mat_<float> R;
-    float robot_angle;
-    Mat_<float> velocity_wheels;
-    Mat_<Direction> direction_wheels;
-    bool rotating;
-    bool dribbling;
-    int kicking;
+    float max_velocity; //!<Velocidade linear máxima que o robô pode assumir (0 - 1,5)
+    float max_ang_velocity; //!<Velocidade angular máxima que o robô pode assumir (0 - 10)
+    int dribbler_velocity; //!<Velocidade do dribbler em valor de pwm (0 - 127)
+    int kick_power; //!<Força do chute em pwm (0 - 127)
+    int pass_power; //!<Força do passe em pwm (0 - 127)
+    Mat_<float> velocity; //!<Matriz (3,1) de velocidade do robô [Vx, Vy, Vo]
+    Mat_<float> M; //!<Matriz (4,3) de modelo cinemático do robô para distribuir a velocidade para as quatro rodas
+    Mat_<float> R; //!<Matriz (3,3) de rotação utilizada para acertar as coordenadas do robô com as do joystick (y+ como frente do robô)
+    float robot_angle; //!<Angulo necessário em radianos para utilizar na matriz R (Pi/2)
+    Mat_<float> velocity_wheels; //!<Matriz (4,1) de velocidade das rodas do robô
+    bool rotating; //!<Flag para indicar se o botão de rotação está pressionado ou não
+    bool dribbling; //!<Flag para indicar se o botão de dribbler está pressionado ou não
+    int kicking; //!<Variável para garantir que o robô vai tentar chutar KICK_TIMES para facilitar o chute na hora de controlar
 
-    Ai2RobotMessage message;
-    SerialCommunicator<Ai2RobotMessage> *serial;
+    Ai2RobotMessage message; //!<Mensagem que será envidada
+    SerialCommunicator<Ai2RobotMessage> *serial; //!<Ponteiro para a thread de comunicação serial
 
+    /*!
+     * \brief initKinematicModel inicia a matriz M criando o modelo cinemático do robô
+     */
     void initKinematicModel();
+    /*!
+     * \brief calculateVelocity calcula a velocidade linear do robô com base no valor oferecido pelo vetor axis
+     */
     void calculateVelocity();
+    /*!
+     * \brief calculateWheelsVelocity utiliza as matrizes velocity, M e R para calcular a velocity_wheels
+     */
     void calculateWheelsVelocity();
 
+    /*!
+     * \brief readEventButton processa um evento que seja disparado por um botão, verificando que tipo de ação se deve tomar
+     * \return booleano indicando se há ou não a necessidade de enviar um dado para o robô
+     */
     bool readEventButton();
+    /*!
+     * \brief readEventAxis processa um evento que seja disparado por um analógico, preenchendo o vetor axis
+     */
     void readEventAxis();
-    bool verifyAxis();
+    /*!
+     * \brief verifyVelocityAxis verifica se os valores que estão no vetor de axis são suficientes para calcular a velocidade
+     * \return booleano indicando se o dado é ou não relevante
+     */
+    bool verifyVelocityAxis();
 
+    /*!
+     * \brief run é o loop principal a thread, passado por parâmetro para td
+     */
     void run();
 
 public:
@@ -67,7 +93,13 @@ public:
 
     ~ManualControl();
 
+    /*!
+     * \brief start modifica a flag running para true e reconstroi a thread td para reiniciar a thread
+     */
     void start();
+    /*!
+     * \brief stop trava com o mutex, modificia a flag running para false e da join na thread td
+     */
     void stop();
 
     void setId(int _id);

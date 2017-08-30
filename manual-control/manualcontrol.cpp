@@ -2,8 +2,6 @@
 ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false),
     kicking(0), serial()
 {
-   // mu = new mutex();
-
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
     axis = vector<short>(2, 0);
@@ -13,8 +11,6 @@ ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(
 ManualControl::ManualControl(int _device_n, SerialCommunicator<Ai2RobotMessage> *_serial): device_n(_device_n),
     max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false), kicking(0), serial(_serial)
 {
-   // mu = new mutex();
-
     joystick = new Joystick(_device_n);
 
     velocity = Mat_<float>(3, 1);
@@ -48,8 +44,6 @@ void ManualControl::run()
         cout<<"Falha ao abrir o controle."<<endl;
     }
 
-    //serial->write(message);
-
     while(running){
         if(joystick->sample(&event)){
             if(event.isButton()){
@@ -60,11 +54,12 @@ void ManualControl::run()
             if(event.isAxis()){
                 readEventAxis();
             }
-            else axis_send = false;
         }
         else{
-            button_send = axis_send = false;
+            button_send = false;
         }
+
+        axis_send = verifyVelocityAxis();
 
         if(kicking>=KICK_TIMES){
             kicking = 0;
@@ -72,7 +67,7 @@ void ManualControl::run()
             button_send = true; //manda mais um dado setando o chute para 0 (bug no código arduino do robô)
         }
 
-        if(axis_send = verifyAxis()) calculateVelocity();
+        if(axis_send) calculateVelocity();
         else {
             velocity[0][0] = 0.0;
             velocity[1][0] = 0.0;
@@ -196,10 +191,9 @@ bool ManualControl::readEventButton()
 }
 void ManualControl::readEventAxis()
 {
-    if(event.number == 0) axis[event.number] = event.value;
-    else if(event.number == 1) axis[event.number] = -(event.value);
+    if(event.number<axis.size()) axis[event.number] = event.value;
 }
-bool ManualControl::verifyAxis()
+bool ManualControl::verifyVelocityAxis()
 {
     for(int i = 0 ; i<2 ; i++)
         if(abs(axis[i]) >= MIN_AXIS) return true;
@@ -209,23 +203,18 @@ bool ManualControl::verifyAxis()
 //Métodos físicos
 void ManualControl::initKinematicModel()
 {
-    //! Estas medidas estão em metros.
-
-    /// O raio da roda é utilizado para determinar as velocidades das rodas e o raio do robo
-    /// para se obter a velocidade angular do robo
+    /*O raio da roda é utilizado para determinar as velocidades das rodas e o raio do robo
+      para se obter a velocidade angular do robo*/
     float radius_wheels = 0.0275;
     float radius_robot = 0.0825;
 
-
-    //--------MODELO CINEMÁTICO DO ROBO-----------
+    ///--------MODELO CINEMÁTICO DO ROBO-----------
     float alpha1, alpha2;
 
-    //angulos de ataque das rodas
-    alpha1 = 45.0*M_PI/180.0;   //45°
-    alpha2 = 37.0*M_PI/180.0;   //37°
+    alpha1 = 45.0*M_PI/180.0; //45°
+    alpha2 = 37.0*M_PI/180.0; //37°
 
     R = Mat_<float>::eye(3,3);
-    //inicializa a matriz M
     /// Aqui é quando inicializamos a matriz M especificado utilizando os valores do robo
     M = Mat_<float>(4,3);
     M[0][0] = -cos(alpha1);     M[0][1] = sin(alpha1);     M[0][2] = -radius_robot;
@@ -237,9 +226,8 @@ void ManualControl::initKinematicModel()
 }
 void ManualControl::calculateVelocity()
 {
-    for(int i = 0 ; i<2 ; i++){
-        velocity[i][0] = ((float)axis[i]/MAX_AXIS)*max_velocity;
-    }
+    velocity[0][0] = ((float)axis[0]/MAX_AXIS)*max_velocity;
+    velocity[1][0] = ((float)-axis[1]/MAX_AXIS)*max_velocity; //leitura do analogico y é invertida
 }
 void ManualControl::calculateWheelsVelocity()
 {

@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Players</string>
   </property>
   <widget class="QDialogButtonBox" name="ok_cancel_button">
    <property name="geometry">
