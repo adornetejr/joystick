@@ -50,6 +50,7 @@ private:
     bool rotating; //!<Flag para indicar se o botão de rotação está pressionado ou não
     bool dribbling; //!<Flag para indicar se o botão de dribbler está pressionado ou não
     int kicking; //!<Variável para garantir que o robô vai tentar chutar KICK_TIMES para facilitar o chute na hora de controlar
+    float bonus_velocity;
 
     Ai2RobotMessage message; //!<Mensagem que será envidada
     SerialCommunicator<Ai2RobotMessage> *serial; //!<Ponteiro para a thread de comunicação serial

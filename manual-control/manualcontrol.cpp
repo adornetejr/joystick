@@ -1,6 +1,6 @@
 #include "manualcontrol.h"
 ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false),
-    kicking(0), serial()
+    kicking(0), serial(), bonus_velocity(0)
 {
     velocity = Mat_<float>(3, 1);
     velocity_wheels = Mat_<float>(4, 1);
@@ -9,7 +9,7 @@ ManualControl::ManualControl(): device_n(-1), max_velocity(0), max_ang_velocity(
     initKinematicModel();
 }
 ManualControl::ManualControl(int _device_n, SerialCommunicator<Ai2RobotMessage> *_serial): device_n(_device_n),
-    max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false), kicking(0), serial(_serial)
+    max_velocity(0), max_ang_velocity(0), running(false), rotating(false), dribbling(false), kicking(0), serial(_serial), bonus_velocity(0)
 {
     joystick = new Joystick(_device_n);
 
@@ -145,22 +145,21 @@ bool ManualControl::readEventButton()
     break;
     case 4:
         if(event.value){
-            message.setDribbler(true, dribbler_velocity, CLOCKWISE);
+            message.setDribbler(true, dribbler_velocity, COUNTERCLOCKWISE);
         }
         else{
-            message.setDribbler(false, 0, CLOCKWISE);
+            message.setDribbler(false, 0, COUNTERCLOCKWISE);
         }
         dribbling = event.value;
         //drible h
     break;
     case 5:
         if(event.value){
-            message.setDribbler(true, dribbler_velocity, COUNTERCLOCKWISE);
+            bonus_velocity =  1.0;
         }
         else{
-            message.setDribbler(false, 0, CLOCKWISE);
+            bonus_velocity = 0;
         }
-        dribbling = event.value;
         //drible a-h
     break;
     case 6:
@@ -226,8 +225,8 @@ void ManualControl::initKinematicModel()
 }
 void ManualControl::calculateVelocity()
 {
-    velocity[0][0] = ((float)axis[0]/MAX_AXIS)*max_velocity;
-    velocity[1][0] = ((float)-axis[1]/MAX_AXIS)*max_velocity; //leitura do analogico y é invertida
+    velocity[0][0] = ((float)axis[0]/MAX_AXIS)*(max_velocity + bonus_velocity);
+    velocity[1][0] = ((float)-axis[1]/MAX_AXIS)*(max_velocity + bonus_velocity); //leitura do analogico y é invertida
 }
 void ManualControl::calculateWheelsVelocity()
 {
