@@ -9,10 +9,9 @@ ManualWindow::ManualWindow(int _player, SerialCommunicator<Ai2RobotMessage> *_se
 {
     ui->setupUi(this);
 
-    QPixmap pix("../joystick/images/control.svg");
-    QPixmap pix2("../joystick/images/logo-mini");
+    QPixmap pix("../images/control.svg");
+    QPixmap pix2("../images/logo-mini");
     ui->xbox_image->setPixmap(pix);
-    //ui->logo->setPixmap(pix2);
     ui->xbox_image->setEnabled(false);
 
     control = new ManualControl(player_num, serial);

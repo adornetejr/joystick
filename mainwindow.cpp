@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QPixmap pix("../joystick/images/logo.png");
+    QPixmap pix("../images/logo.png");
     ui->fbot_image->setPixmap(pix);
     players_ui = new PlayersDialog();
 }

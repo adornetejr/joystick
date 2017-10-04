@@ -145,10 +145,10 @@ bool ManualControl::readEventButton()
     break;
     case 4:
         if(event.value){
-            message.setDribbler(true, dribbler_velocity, COUNTERCLOCKWISE);
+            message.setDribbler(true, dribbler_velocity, CLOCKWISE);
         }
         else{
-            message.setDribbler(false, 0, COUNTERCLOCKWISE);
+            message.setDribbler(false, 0, CLOCKWISE);
         }
         dribbling = event.value;
         //drible h
@@ -160,7 +160,7 @@ bool ManualControl::readEventButton()
         else{
             bonus_velocity = 0;
         }
-        //drible a-h
+        //boost
     break;
     case 6:
         if(event.value){
@@ -230,8 +230,8 @@ void ManualControl::calculateVelocity()
 }
 void ManualControl::calculateWheelsVelocity()
 {
-    /*Rotação para o modelo cinemático, porque ele é feito considerando o (x, y) do campo
-      e não do robô, onde a frente seria o y(+)*/
+    /*Rotação para o modelo cinemático, porque ele é feito considerando o x(+) como a frente do rôbo,
+      porém o acionamento do joystick para frente é uma entrada em y(+)*/
     R[0][0] = cos(robot_angle);  R[0][1] = sin(robot_angle);
     R[1][0] = -sin(robot_angle); R[1][1] = cos(robot_angle);
 
